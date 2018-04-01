@@ -1,0 +1,74 @@
+from google.cloud import language
+from google.cloud.language import enums
+from google.cloud.language import types
+from google.oauth2 import service_account
+import json
+
+credentials = service_account.Credentials.from_service_account_file('apikey.json')
+
+scoped_credentials = credentials.with_scopes(['https://www.googleapis.com/auth/cloud-platform'])
+
+tickers = {}
+
+with open("tickers_to_wiki.json", 'r') as fp:
+    tickers = dict(json.load(fp))
+fp.close()
+
+def get_sentiment(company_name, text):
+    client = language.LanguageServiceClient(credentials=credentials)
+    document = types.Document(
+        content=text,
+        type=enums.Document.Type.PLAIN_TEXT)
+
+    s_analysis = client.analyze_sentiment(document=document)
+    # print(dir(s_analysis))
+    # print(s_analysis)
+    score = s_analysis.document_sentiment.score
+    magnitude = s_analysis.document_sentiment.magnitude
+
+    normalized_magnitude = magnitude / len(text.split())
+
+    e_analysis = client.analyze_entity_sentiment(document=document)
+    entities = list([e for e in e_analysis.entities])
+
+    index = len(entities) - 1
+
+    wikiurl = tickers[company_name]
+
+    # print(entities)
+
+    entity_score = 0
+    entity_magnitude = 0
+
+    has_entity = False
+
+    for idx, e in enumerate(entities):
+        if e.metadata['wikipedia_url'] == wikiurl:
+            index = idx
+            entity_score = e.sentiment.score
+            entity_magnitude = e.sentiment.magnitude
+            print(e.metadata['wikipedia_url'])
+            has_entity = True
+            break
+
+    normalized_entity_magnitude = entity_magnitude / len(text.split())
+
+    relevance_score = (len(entities) - index) / len(entities)
+
+    entity_sentiment = entity_score * normalized_entity_magnitude * relevance_score
+
+    if has_entity:
+        print('Has entity')
+        return entity_sentiment
+    else:
+        print('No entity')
+        return score * normalized_magnitude * relevance_score * 0.0001
+
+
+example = "Donald Trump announces that Amazon will be banished to the Amazon Jungle"
+example2 = 'Apple\'s presentation for its new iPad for classrooms pulled lessons from Steve Jobs https://t.co/ktsIlZRv3u,The crazy thing isn’t how big Apple’s dividend hikes consistently are. The crazy thing is that, as fast as it lifts… https://t.co/yrpqmHlBHx,1976 - Apple Inc. is formed by Steve Jobs, Steve Wozniak, and Ronald Wayne in Cupertino, California, USA'
+example3 = 'Apple iphone is very bad as the battery is terrible'
+example4 = "Apple iphone is very bad and has a terrible battery. Use Samsung instead, it has a great battery life, amazing screen. You are sure to love it because it is very good"
+company_name = 'AMZN'
+
+print(get_sentiment(company_name, example))
