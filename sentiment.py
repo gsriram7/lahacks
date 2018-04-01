@@ -25,7 +25,9 @@ def get_sentiment(company_name, text):
     score = s_analysis.document_sentiment.score
     magnitude = s_analysis.document_sentiment.magnitude
 
-    normalized_magnitude = magnitude / 27
+    word_count = len(text.split())
+
+    normalized_magnitude = magnitude / (27 + word_count)
 
     e_analysis = client.analyze_entity_sentiment(document=document)
     entities = list([e for e in e_analysis.entities])
@@ -48,7 +50,7 @@ def get_sentiment(company_name, text):
             has_entity = True
             break
 
-    normalized_entity_magnitude = entity_magnitude / 27
+    normalized_entity_magnitude = entity_magnitude / (27 + word_count)
 
     relevance_score = (len(entities) - index) / len(entities)
 
@@ -64,36 +66,38 @@ def get_sentiment(company_name, text):
             penalty = 1
         return score * normalized_magnitude * relevance_score * penalty
 
+if __name__ == '__main__':
+    example1 = "Donald Trump announces that Amazon will be banished to the Amazon Jungle"
+    example2 = 'Apple\'s presentation for its new iPad for classrooms pulled lessons from Steve Jobs https://t.co/ktsIlZRv3u,The crazy thing isn’t how big Apple’s dividend hikes consistently are. The crazy thing is that, as fast as it lifts… https://t.co/yrpqmHlBHx,1976 - Apple Inc. is formed by Steve Jobs, Steve Wozniak, and Ronald Wayne in Cupertino, California, USA'
+    example3 = 'Apple iphone is very bad as the battery is terrible'
+    example4 = "Apple iphone is very bad and has a terrible battery. Use Samsung instead, it has a great battery life, amazing screen. You are sure to love it because it is very good"
+    example5 = 'Apple stocks are going up, good news for Apple. Great! #Apple #comeback'
+    example6 = 'Apple sucks!'
+    example7 = '4th time forced into Windows update that messes up my computer in the last 4 days. I\'m so annoyed. #Windows10 #microsoft'
+    company_name = 'MSFT'
 
-example1 = "Donald Trump announces that Amazon will be banished to the Amazon Jungle"
-example2 = 'Apple\'s presentation for its new iPad for classrooms pulled lessons from Steve Jobs https://t.co/ktsIlZRv3u,The crazy thing isn’t how big Apple’s dividend hikes consistently are. The crazy thing is that, as fast as it lifts… https://t.co/yrpqmHlBHx,1976 - Apple Inc. is formed by Steve Jobs, Steve Wozniak, and Ronald Wayne in Cupertino, California, USA'
-example3 = 'Apple iphone is very bad as the battery is terrible'
-example4 = "Apple iphone is very bad and has a terrible battery. Use Samsung instead, it has a great battery life, amazing screen. You are sure to love it because it is very good"
-example5 = 'Apple stocks are going up, good news for Apple. Great! #Apple #comeback'
-example6 = 'Apple sucks!'
-example7 = '4th time forced into Windows update that messes up my computer in the last 4 days. I\'m so annoyed. #Windows10 #microsoft'
-company_name = 'MSFT'
+    examples = [example1, example2, example3, example4]
 
-examples = [example1, example2, example3, example4]
+    # for e in examples:
+        # print(get_sentiment(company_name, e))
 
-# for e in examples:
-    # print(get_sentiment(company_name, e))
-
-print(get_sentiment(company_name, example7))
+    print(get_sentiment(company_name, example7))
 
 
 def get_average_sentiment(all_tweets):
     company_name = all_tweets['company']
     tweets = all_tweets['tweets']
     total = 0
+    tot_follow = 0
 
     if not tweets or company_name not in tickers:
         return 0
 
     for t in tweets:
         sentiment = get_sentiment(company_name, t['text'])
-        total = total + (sentiment * math.pow(t['followers'], 0.9) * (t['retweets'] * 0.3))
+        tot_follow += t['followers']
+        total += (sentiment * (math.pow(t['followers'], 0.9) * (t['retweets'] * 0.2 + 150)))
 
-    average = total / len(tweets)
+    average = total / (math.pow(tot_follow, 0.71) + len(tweets)*150)
 
     return {"company": company_name, "sentiment": average}
