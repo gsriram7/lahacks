@@ -12,6 +12,7 @@ def index():
 @app.route("/sentiment", methods=["POST"])
 def senti():
     text = request.json
+    print(text)
     avg_sentiment = sentiment.get_average_sentiment(text)
     return jsonify(avg_sentiment)
 

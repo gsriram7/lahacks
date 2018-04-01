@@ -3,6 +3,7 @@ from google.cloud.language import enums
 from google.cloud.language import types
 from google.oauth2 import service_account
 import json
+import math
 
 credentials = service_account.Credentials.from_service_account_file('apikey.json')
 
@@ -70,14 +71,15 @@ example3 = 'Apple iphone is very bad as the battery is terrible'
 example4 = "Apple iphone is very bad and has a terrible battery. Use Samsung instead, it has a great battery life, amazing screen. You are sure to love it because it is very good"
 example5 = 'Apple stocks are going up, good news for Apple. Great! #Apple #comeback'
 example6 = 'Apple sucks!'
-company_name = 'AAPL'
+example7 = '4th time forced into Windows update that messes up my computer in the last 4 days. I\'m so annoyed. #Windows10 #microsoft'
+company_name = 'MSFT'
 
 examples = [example1, example2, example3, example4]
 
 # for e in examples:
     # print(get_sentiment(company_name, e))
 
-print(get_sentiment(company_name, example6))
+print(get_sentiment(company_name, example7))
 
 
 def get_average_sentiment(all_tweets):
@@ -85,9 +87,12 @@ def get_average_sentiment(all_tweets):
     tweets = all_tweets['tweets']
     total = 0
 
+    if not tweets or company_name not in tickers:
+        return 0
+
     for t in tweets:
         sentiment = get_sentiment(company_name, t['text'])
-        total = total + sentiment
+        total = total + (sentiment * math.pow(t['followers'], 0.9) * (t['retweets'] * 0.3))
 
     average = total / len(tweets)
 
