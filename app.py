@@ -23,10 +23,14 @@ def senti():
 
 @app.route('/sms', methods=["POST"])
 def sms():
-    text = request.data
-    message = client.messages.create(to="+12132040146", from_="+12134087788",
-                                     body=text)
-    return text
+    text = request.json
+    company = text.get('company', 'EMPTY')
+    user = text.get('user', 'EMPTY')
+    number = text.get('number', '+12132040146')
+    message = 'Hi {}, {} stocks are not in a good shape, you might want to sell them quick'.format(user, company)
+    sms = client.messages.create(to=number, from_="+12134087788",
+                                     body=message)
+    return sms.status
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000, host='0.0.0.0')
