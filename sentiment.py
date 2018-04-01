@@ -85,19 +85,23 @@ if __name__ == '__main__':
 
 
 def get_average_sentiment(all_tweets):
-    company_name = all_tweets['company']
+    company_name = all_tweets.get('company', 'NOCOMPANY')
     tweets = all_tweets['tweets']
     total = 0
     tot_follow = 0
 
     if not tweets or company_name not in tickers:
-        return 0
+        return {"company": company_name, "sentiment": 0}
 
     for t in tweets:
-        sentiment = get_sentiment(company_name, t['text'])
-        tot_follow += t['followers']
-        total += (sentiment * (math.pow(t['followers'], 0.9) * (t['retweets'] * 0.2 + 150)))
+        try:
+            sentiment = get_sentiment(company_name, t['text'])
+            tot_follow += t['followers']
+            total += (sentiment * math.pow(t['followers'], 0.9) * (t['retweets'] * 0.2 + 150))
+        except Exception as e:
+            print('Exception occured {}'.format(str(e)))
 
     average = total / (math.pow(tot_follow, 0.71) + len(tweets)*150)
-
-    return {"company": company_name, "sentiment": average}
+    response = {"company": company_name, "sentiment": average}
+    print('Done processing the tweets. Sending response {}'.format(response))
+    return response
