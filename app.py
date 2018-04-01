@@ -1,22 +1,19 @@
 from flask import Flask
 from flask import request
-from google.cloud import language
-
-language_client = language.Client()
+from flask import jsonify
+import sentiment
 
 app = Flask(__name__)
-language_client = language.Client()
 
 @app.route('/')
 def index():
     return "Hello, World!"
 
 @app.route("/sentiment", methods=["POST"])
-def sentiment():
-    text = request.json['text']
-    document = language_client.document_from_html(text)
-    print(text)
-    return text
+def senti():
+    text = request.json
+    avg_sentiment = sentiment.get_average_sentiment(text)
+    return jsonify(avg_sentiment)
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000, host='0.0.0.0')

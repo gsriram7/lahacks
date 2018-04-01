@@ -21,21 +21,17 @@ def get_sentiment(company_name, text):
         type=enums.Document.Type.PLAIN_TEXT)
 
     s_analysis = client.analyze_sentiment(document=document)
-    # print(dir(s_analysis))
-    # print(s_analysis)
     score = s_analysis.document_sentiment.score
     magnitude = s_analysis.document_sentiment.magnitude
 
-    normalized_magnitude = magnitude / len(text.split())
+    normalized_magnitude = magnitude / 27
 
     e_analysis = client.analyze_entity_sentiment(document=document)
     entities = list([e for e in e_analysis.entities])
 
     index = len(entities) - 1
 
-    wikiurl = tickers[company_name]
-
-    # print(entities)
+    wiki_url = tickers[company_name]
 
     entity_score = 0
     entity_magnitude = 0
@@ -43,7 +39,7 @@ def get_sentiment(company_name, text):
     has_entity = False
 
     for idx, e in enumerate(entities):
-        if e.metadata['wikipedia_url'] == wikiurl:
+        if e.metadata['wikipedia_url'] == wiki_url:
             index = idx
             entity_score = e.sentiment.score
             entity_magnitude = e.sentiment.magnitude
@@ -51,24 +47,48 @@ def get_sentiment(company_name, text):
             has_entity = True
             break
 
-    normalized_entity_magnitude = entity_magnitude / len(text.split())
+    normalized_entity_magnitude = entity_magnitude / 27
 
     relevance_score = (len(entities) - index) / len(entities)
 
     entity_sentiment = entity_score * normalized_entity_magnitude * relevance_score
 
-    if has_entity:
+    if has_entity and entity_sentiment!=0:
         print('Has entity')
         return entity_sentiment
     else:
         print('No entity')
-        return score * normalized_magnitude * relevance_score * 0.0001
+        penalty = 0.00001
+        if has_entity:
+            penalty = 1
+        return score * normalized_magnitude * relevance_score * penalty
 
 
-example = "Donald Trump announces that Amazon will be banished to the Amazon Jungle"
+example1 = "Donald Trump announces that Amazon will be banished to the Amazon Jungle"
 example2 = 'Apple\'s presentation for its new iPad for classrooms pulled lessons from Steve Jobs https://t.co/ktsIlZRv3u,The crazy thing isn’t how big Apple’s dividend hikes consistently are. The crazy thing is that, as fast as it lifts… https://t.co/yrpqmHlBHx,1976 - Apple Inc. is formed by Steve Jobs, Steve Wozniak, and Ronald Wayne in Cupertino, California, USA'
 example3 = 'Apple iphone is very bad as the battery is terrible'
 example4 = "Apple iphone is very bad and has a terrible battery. Use Samsung instead, it has a great battery life, amazing screen. You are sure to love it because it is very good"
-company_name = 'AMZN'
+example5 = 'Apple stocks are going up, good news for Apple. Great! #Apple #comeback'
+example6 = 'Apple sucks!'
+company_name = 'AAPL'
 
-print(get_sentiment(company_name, example))
+examples = [example1, example2, example3, example4]
+
+# for e in examples:
+    # print(get_sentiment(company_name, e))
+
+print(get_sentiment(company_name, example6))
+
+
+def get_average_sentiment(all_tweets):
+    company_name = all_tweets['company']
+    tweets = all_tweets['tweets']
+    total = 0
+
+    for t in tweets:
+        sentiment = get_sentiment(company_name, t['text'])
+        total = total + sentiment
+
+    average = total / len(tweets)
+
+    return {"company": company_name, "sentiment": average}
