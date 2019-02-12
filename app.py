@@ -26,9 +26,9 @@ def sms():
     text = request.json
     company = text.get('company', 'EMPTY')
     user = text.get('user', 'EMPTY')
-    number = text.get('number', '+12132040146')
+    number = text.get('number', '')
     message = 'Hi {}, {} stocks are not in a good shape, you might want to sell them quick'.format(user, company)
-    sms = client.messages.create(to=number, from_="+12134087788",
+    sms = client.messages.create(to=number, from_="",
                                      body=message)
     return sms.status
 
