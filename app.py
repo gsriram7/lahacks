@@ -6,8 +6,8 @@ from twilio.rest import Client
 
 app = Flask(__name__)
 
-account = 'ACc89d674cfce611bdb7ec2482511428d8'
-token = 'c9a1c5ef2ff95d8eed2f82a55fef9681'
+account = ''
+token = ''
 client = Client(account, token)
 
 @app.route('/')
